@@ -4,8 +4,8 @@ import 'package:white_label_customer_flutter/components/cart/cart.dart';
 
 class Footer extends StatelessWidget {
   final String buttonText;
-  final String? link; // Make link optional
-  final VoidCallback? onPress; // Add onPress function
+  final String? link;
+  final VoidCallback? onPress;
 
   Footer({required this.buttonText, this.link, this.onPress});
 

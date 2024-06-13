@@ -4,8 +4,6 @@ const logger = require("firebase-functions/logger");
 const admin = require('firebase-admin');
 admin.initializeApp();
 
-// Zugriff auf die Umgebungsvariable
-//const stripeSecret = process.env.STRIPE_SECRET_KEY;
 const stripeSecret = "sk_test_51P6zuhRqMnrUhHfkUVqir9My7sWBJdxG2iGLm9HZ7PME8k8DbeQQeLIyNrTWtvmVmRlM2F7BvXaBLXEYpoJVsCY700U3Tr995U";
 const stripe = require('stripe')(stripeSecret);
 
@@ -18,21 +16,19 @@ exports.createPaymentIntent = onCall(async (request) => {
   }
 
   try {
-    logger.info(`Creating payment intent for amount: ${amount} and currency: ${currency}`);
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amount,
       currency: currency,
     });
 
-    logger.info(`Payment intent created: ${paymentIntent.id}`);
     return {
       clientSecret: paymentIntent.client_secret,
     };
   } catch (error) {
-    logger.error("Error creating payment intent", error);
     throw new functions.https.HttpsError('unknown', `Error creating payment intent: ${error.message}`, error);
   }
 });
+
 
 exports.checkStripeKey = onCall((request) => {
   if (!stripeSecret) {

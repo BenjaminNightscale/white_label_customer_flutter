@@ -21,8 +21,8 @@ class SummaryArea extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Tip 10%'),
-              Text('${(cart.subtotal * 0.1).toStringAsFixed(2)} €'),
+              Text('Tip ${cart.tipPercentage.toStringAsFixed(0)}%'),
+              Text('${(cart.subtotal * cart.tipPercentage / 100).toStringAsFixed(2)} €'),
             ],
           ),
         ],

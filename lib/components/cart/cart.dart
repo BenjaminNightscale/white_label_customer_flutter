@@ -3,8 +3,10 @@ import 'package:white_label_customer_flutter/services/database/drink.dart';
 
 class Cart with ChangeNotifier {
   final List<Drink> _items = [];
+  double _tipPercentage = 0.0; // Neue Eigenschaft für Trinkgeld
 
   List<Drink> get items => _items;
+  double get tipPercentage => _tipPercentage;
 
   void addItem(Drink drink) {
     var existingItem = _items.firstWhere((item) => item.id == drink.id, orElse: () => Drink(
@@ -31,15 +33,21 @@ class Cart with ChangeNotifier {
   }
 
   double get totalPrice {
-    return _items.fold(0.0, (total, current) => total + current.price * current.quantity);
+    return subtotal * (1 + _tipPercentage / 100);
   }
 
   double get subtotal {
     return _items.fold(0.0, (total, current) => total + current.price * current.quantity);
   }
 
+  void setTipPercentage(double percentage) {
+    _tipPercentage = percentage;
+    notifyListeners();
+  }
+
   void clear() {
     _items.clear();
+    _tipPercentage = 0.0; // Trinkgeld zurücksetzen
     notifyListeners();
   }
 

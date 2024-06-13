@@ -1,82 +1,81 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:white_label_customer_flutter/components/cart/tip_section.dart';
+import 'package:white_label_customer_flutter/components/summary_area.dart';
 import 'package:white_label_customer_flutter/services/payment/payment_service.dart';
-import 'package:cloud_functions/cloud_functions.dart';
+import 'package:provider/provider.dart';
+import 'package:white_label_customer_flutter/components/cart/cart.dart';
 
 class CheckoutView extends StatelessWidget {
   final PaymentService _paymentService = PaymentService();
 
   @override
   Widget build(BuildContext context) {
+    final cart = Provider.of<Cart>(context);
+
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(0.0),
       child: Column(
         children: [
-          const Expanded(
-            child: Center(
-              child: Text('Checkout Page Content Here'),
+          Expanded(
+            child: ListView.builder(
+              itemCount: cart.items.length,
+              itemBuilder: (context, index) {
+                final item = cart.items[index];
+                return ListTile(
+                  title: Text(item.name),
+                  subtitle: Text('Quantity: ${item.quantity}'),
+                  trailing: Text('€${item.price.toStringAsFixed(2)}'),
+                  textColor: Theme.of(context).colorScheme.onBackground,
+                );
+              },
             ),
           ),
-          CardFormField(
-            controller: CardFormEditController(),
-            style: CardFormStyle(
-              borderColor: Colors.blue,
-              backgroundColor: Colors.white,
-              textColor: Colors.black,
-            ),
-            onCardChanged: (card) {
-              print(card);
-            },
-          ),
+          TipSection(), // Use the TipSection component here
+          SummaryArea(), // Use the SummaryArea here
         ],
       ),
     );
   }
 
   Future<void> pay(BuildContext context) async {
-    const int amount = 6900; // Beispielbetrag in Cent
+    final cart = Provider.of<Cart>(context, listen: false);
+    final int amount = (cart.totalPrice * 100).toInt(); // Total amount in cents
     const String currency = 'eur';
 
     try {
-      // Überprüfe den Stripe-Schlüssel
-      final String? stripeKey = await checkStripeKey();
-      if (stripeKey == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Stripe key is not set or invalid.')),
-        );
-        return;
-      }
+      // Create Payment Intent on the backend
+      final String clientSecret = await _paymentService.createPaymentIntent(
+        amount,
+        currency,
+      );
 
-      final String clientSecret = await _paymentService
-          .createPaymentIntent(amount, currency);
-
-      await Stripe.instance.initPaymentSheet(
-          paymentSheetParameters: SetupPaymentSheetParameters(
+      // Display the Stripe Payment Sheet
+      await Stripe.instance.initPaymentSheet(paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
-        style: ThemeMode.light,
+        style: ThemeMode.system,
         merchantDisplayName: 'Your Merchant Name',
       ));
 
       await Stripe.instance.presentPaymentSheet();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment completed!')));
-    } catch (e) {
-      print('Error: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: $e')));
-    }
-  }
+      if (!context.mounted) return;
 
-  Future<String?> checkStripeKey() async {
-    final HttpsCallable callable = FirebaseFunctions.instance.httpsCallable('checkStripeKey');
-    try {
-      final response = await callable.call();
-      print('Stripe Key: ${response.data['stripeSecret']}');
-      return response.data['stripeSecret'];
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Payment completed!')),
+      );
     } catch (e) {
-      print('Error checking Stripe key: $e');
-      return null;
+      if (e is StripeException) {
+        print('Error from Stripe: ${e.error.localizedMessage}');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: ${e.error.localizedMessage}')),
+        );
+      } else {
+        print('Error: $e');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Payment failed: $e')),
+        );
+      }
     }
   }
 }
