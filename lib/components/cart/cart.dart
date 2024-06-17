@@ -3,21 +3,22 @@ import 'package:white_label_customer_flutter/services/database/drink.dart';
 
 class Cart with ChangeNotifier {
   final List<Drink> _items = [];
-  double _tipPercentage = 0.0; // Neue Eigenschaft für Trinkgeld
+  double _tipPercentage = 15.0; // Default tip percentage
 
   List<Drink> get items => _items;
   double get tipPercentage => _tipPercentage;
 
   void addItem(Drink drink) {
-    var existingItem = _items.firstWhere((item) => item.id == drink.id, orElse: () => Drink(
-      id: drink.id,
-      name: drink.name,
-      category: drink.category,
-      price: drink.price,
-      imageUrl: drink.imageUrl,
-      ingredients: drink.ingredients,
-      quantity: 0,
-    ));
+    var existingItem = _items.firstWhere((item) => item.id == drink.id,
+        orElse: () => Drink(
+              id: drink.id,
+              name: drink.name,
+              category: drink.category,
+              price: drink.price,
+              imageUrl: drink.imageUrl,
+              ingredients: drink.ingredients,
+              quantity: 0,
+            ));
 
     if (existingItem.quantity == 0) {
       _items.add(existingItem);
@@ -37,17 +38,22 @@ class Cart with ChangeNotifier {
   }
 
   double get subtotal {
-    return _items.fold(0.0, (total, current) => total + current.price * current.quantity);
+    return _items.fold(
+        0.0, (total, current) => total + current.price * current.quantity);
   }
 
   void setTipPercentage(double percentage) {
-    _tipPercentage = percentage;
+    if (_tipPercentage == percentage) {
+      _tipPercentage = 0.0; // Deselect if the same percentage is pressed again
+    } else {
+      _tipPercentage = percentage;
+    }
     notifyListeners();
   }
 
   void clear() {
     _items.clear();
-    _tipPercentage = 0.0; // Trinkgeld zurücksetzen
+    _tipPercentage = 0.0; // Reset tip
     notifyListeners();
   }
 

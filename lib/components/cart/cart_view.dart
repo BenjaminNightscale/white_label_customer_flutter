@@ -98,7 +98,6 @@ class CartView extends StatelessWidget {
                             ],
                           ),
                         ),
-                        Divider(color: Theme.of(context).colorScheme.outline),
                         SummaryArea(),
                         Divider(color: Theme.of(context).colorScheme.outline),
                       ],

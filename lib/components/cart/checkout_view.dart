@@ -13,27 +13,40 @@ class CheckoutView extends StatelessWidget {
   Widget build(BuildContext context) {
     final cart = Provider.of<Cart>(context);
 
-    return Padding(
-      padding: const EdgeInsets.all(0.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: cart.items.length,
-              itemBuilder: (context, index) {
-                final item = cart.items[index];
-                return ListTile(
-                  title: Text(item.name),
-                  subtitle: Text('Quantity: ${item.quantity}'),
-                  trailing: Text('€${item.price.toStringAsFixed(2)}'),
-                  textColor: Theme.of(context).colorScheme.onBackground,
-                );
-              },
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16.0), // Padding around the main content
+              child: Column(
+                children: [
+                  ListView.builder(
+                    shrinkWrap: true, // Ensure it takes only as much space as needed
+                    physics: NeverScrollableScrollPhysics(), // Disable internal scrolling
+                    itemCount: cart.items.length,
+                    itemBuilder: (context, index) {
+                      final item = cart.items[index];
+                      return ListTile(
+                        title: Text(item.name),
+                        subtitle: Text('Quantity: ${item.quantity}'),
+                        trailing: Text('€${item.price.toStringAsFixed(2)}'),
+                        textColor: Theme.of(context).colorScheme.onBackground,
+                      );
+                    },
+                  ),
+                  TipSection(),
+                ],
+              ),
             ),
-          ),
-          TipSection(), // Use the TipSection component here
-          SummaryArea(), // Use the SummaryArea here
-        ],
+            Divider(color: Theme.of(context).colorScheme.outline),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: SummaryArea(),
+            ),
+            Divider(color: Theme.of(context).colorScheme.outline),
+          ],
+        ),
       ),
     );
   }
@@ -51,7 +64,8 @@ class CheckoutView extends StatelessWidget {
       );
 
       // Display the Stripe Payment Sheet
-      await Stripe.instance.initPaymentSheet(paymentSheetParameters: SetupPaymentSheetParameters(
+      await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
         paymentIntentClientSecret: clientSecret,
         style: ThemeMode.system,
         merchantDisplayName: 'Your Merchant Name',
@@ -68,7 +82,8 @@ class CheckoutView extends StatelessWidget {
       if (e is StripeException) {
         print('Error from Stripe: ${e.error.localizedMessage}');
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Payment failed: ${e.error.localizedMessage}')),
+          SnackBar(
+              content: Text('Payment failed: ${e.error.localizedMessage}')),
         );
       } else {
         print('Error: $e');

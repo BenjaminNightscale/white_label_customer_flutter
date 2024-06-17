@@ -8,7 +8,6 @@ import 'package:white_label_customer_flutter/components/order_app_bar.dart';
 import 'package:white_label_customer_flutter/services/database/drink.dart';
 import 'package:white_label_customer_flutter/services/database/firestore.dart';
 
-
 class OrderPage extends StatelessWidget {
   const OrderPage({super.key});
 
@@ -24,11 +23,12 @@ class OrderPage extends StatelessWidget {
   Widget _buildBottomCartPopup(BuildContext context) {
     return Consumer<Cart>(
       builder: (context, cart, child) {
-        return cart.items.isNotEmpty ? BottomCartPopup() : SizedBox.shrink();
+        return cart.items.isNotEmpty ? BottomCartPopup() : const SizedBox.shrink();
       },
     );
   }
 }
+
 
 class DrinkMenu extends StatefulWidget {
   const DrinkMenu({super.key});
@@ -39,8 +39,7 @@ class DrinkMenu extends StatefulWidget {
 
 class _DrinkMenuState extends State<DrinkMenu> {
   final ItemScrollController itemScrollController = ItemScrollController();
-  final ItemPositionsListener itemPositionsListener =
-      ItemPositionsListener.create();
+  final ItemPositionsListener itemPositionsListener = ItemPositionsListener.create();
   final ItemScrollController categoryScrollController = ItemScrollController();
 
   late Map<String, List<Drink>> categorizedDrinks;
@@ -85,7 +84,20 @@ class _DrinkMenuState extends State<DrinkMenu> {
       categorizedDrinks.putIfAbsent(drink.category, () => []).add(drink);
     }
     categories = categorizedDrinks.keys.toList();
+    _sortCategories();
     categoryIndexMap = {};
+  }
+
+  void _sortCategories() {
+    categories.sort((a, b) {
+      if (a == 'Sparkombis') {
+        return -1; // 'Sparkombis' should come first
+      } else if (b == 'Sparkombis') {
+        return 1; // 'Sparkombis' should come first
+      } else {
+        return a.compareTo(b); // Sort the rest alphabetically
+      }
+    });
   }
 
   void buildListWidgets() {
@@ -97,10 +109,8 @@ class _DrinkMenuState extends State<DrinkMenu> {
 
       // Apply different padding for the first category
       EdgeInsets categoryPadding = index == 0
-          ? const EdgeInsets.only(
-              top: 5.0, bottom: 15.0, left: 15.0, right: 15.0)
-          : const EdgeInsets.only(
-              top: 40.0, bottom: 15.0, left: 15.0, right: 15.0);
+          ? const EdgeInsets.only(top: 5.0, bottom: 15.0, left: 15.0, right: 15.0)
+          : const EdgeInsets.only(top: 40.0, bottom: 15.0, left: 15.0, right: 15.0);
 
       listWidgets.add(
         Padding(
@@ -140,30 +150,32 @@ class _DrinkMenuState extends State<DrinkMenu> {
   void updateVisibleCategory() {
     var visiblePositions = itemPositionsListener.itemPositions.value;
     if (visiblePositions.isNotEmpty) {
-      int firstVisibleIndex = visiblePositions
-          .where((position) =>
-              position.itemLeadingEdge <= 0 && position.itemTrailingEdge > 0)
-          .reduce((min, position) =>
-              position.itemLeadingEdge > min.itemLeadingEdge ? position : min)
-          .index;
-      String? newCategory;
-      Widget firstVisibleWidget = listWidgets[firstVisibleIndex];
-      if (firstVisibleWidget is Padding) {
-        Text? textWidget = firstVisibleWidget.child as Text?;
-        if (textWidget != null) {
-          newCategory = textWidget.data;
+      // Ensure there's a valid element to reduce
+      var firstVisiblePositions = visiblePositions
+          .where((position) => position.itemLeadingEdge <= 0 && position.itemTrailingEdge > 0);
+      if (firstVisiblePositions.isNotEmpty) {
+        int firstVisibleIndex = firstVisiblePositions
+            .reduce((min, position) => position.itemLeadingEdge > min.itemLeadingEdge ? position : min)
+            .index;
+        String? newCategory;
+        Widget firstVisibleWidget = listWidgets[firstVisibleIndex];
+        if (firstVisibleWidget is Padding) {
+          Text? textWidget = firstVisibleWidget.child as Text?;
+          if (textWidget != null) {
+            newCategory = textWidget.data;
+          }
         }
-      }
-      if (newCategory != null && selectedCategory != newCategory) {
-        setState(() {
-          selectedCategory = newCategory;
-        });
-        categoryScrollController.scrollTo(
-          index: categories.indexOf(newCategory),
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeInOut,
-          alignment: 0.0,
-        );
+        if (newCategory != null && selectedCategory != newCategory) {
+          setState(() {
+            selectedCategory = newCategory;
+          });
+          categoryScrollController.scrollTo(
+            index: categories.indexOf(newCategory),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            alignment: 0.0,
+          );
+        }
       }
     }
   }
@@ -173,21 +185,25 @@ class _DrinkMenuState extends State<DrinkMenu> {
     if (isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
-    return Column(
-      children: [
-        _buildCategorySelector(),
-        Expanded(
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 25),
-            child: ScrollablePositionedList.builder(
-              itemScrollController: itemScrollController,
-              itemPositionsListener: itemPositionsListener,
-              itemCount: listWidgets.length,
-              itemBuilder: (context, index) => listWidgets[index],
-            ),
+    return Consumer<Cart>(
+      builder: (context, cart, child) {
+        return Padding(
+          padding: EdgeInsets.only(bottom: cart.items.isNotEmpty ? 85.0 : 30.0), // Adjust the bottom padding dynamically
+          child: Column(
+            children: [
+              _buildCategorySelector(),
+              Expanded(
+                child: ScrollablePositionedList.builder(
+                  itemScrollController: itemScrollController,
+                  itemPositionsListener: itemPositionsListener,
+                  itemCount: listWidgets.length,
+                  itemBuilder: (context, index) => listWidgets[index],
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 
@@ -234,9 +250,7 @@ class _DrinkMenuState extends State<DrinkMenu> {
                 right: 0,
                 child: Container(
                   height: 6,
-                  color: isSelected
-                      ? Theme.of(context).colorScheme.primary
-                      : Colors.transparent,
+                  color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
                 ),
               ),
             ],

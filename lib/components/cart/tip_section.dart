@@ -12,7 +12,7 @@ class TipSection extends StatelessWidget {
       padding: const EdgeInsets.all(16.0),
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).colorScheme.outline),
-        borderRadius: BorderRadius.circular(8.0),
+        borderRadius: BorderRadius.circular(10.0),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -67,6 +67,7 @@ class TipSection extends StatelessWidget {
           },
           child: Text(label, style: Theme.of(context).textTheme.labelSmall),
         ),
+
       ],
     );
   }

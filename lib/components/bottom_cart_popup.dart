@@ -11,7 +11,7 @@ class BottomCartPopup extends StatelessWidget {
 
     return Container(
       color: Theme.of(context).colorScheme.background,
-      padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 0.0, bottom: 25),
+      padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 5.0, bottom: 40),
       child: Row(
         children: [
           Expanded(
