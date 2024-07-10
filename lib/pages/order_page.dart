@@ -29,7 +29,6 @@ class OrderPage extends StatelessWidget {
   }
 }
 
-
 class DrinkMenu extends StatefulWidget {
   const DrinkMenu({super.key});
 
@@ -107,7 +106,6 @@ class _DrinkMenuState extends State<DrinkMenu> {
     for (var category in categories) {
       categoryIndexMap[category] = index;
 
-      // Apply different padding for the first category
       EdgeInsets categoryPadding = index == 0
           ? const EdgeInsets.only(top: 5.0, bottom: 15.0, left: 15.0, right: 15.0)
           : const EdgeInsets.only(top: 40.0, bottom: 15.0, left: 15.0, right: 15.0);
@@ -150,7 +148,6 @@ class _DrinkMenuState extends State<DrinkMenu> {
   void updateVisibleCategory() {
     var visiblePositions = itemPositionsListener.itemPositions.value;
     if (visiblePositions.isNotEmpty) {
-      // Ensure there's a valid element to reduce
       var firstVisiblePositions = visiblePositions
           .where((position) => position.itemLeadingEdge <= 0 && position.itemTrailingEdge > 0);
       if (firstVisiblePositions.isNotEmpty) {
@@ -188,7 +185,7 @@ class _DrinkMenuState extends State<DrinkMenu> {
     return Consumer<Cart>(
       builder: (context, cart, child) {
         return Padding(
-          padding: EdgeInsets.only(bottom: cart.items.isNotEmpty ? 85.0 : 30.0), // Adjust the bottom padding dynamically
+          padding: EdgeInsets.only(bottom: cart.items.isNotEmpty ? 85.0 : 30.0),
           child: Column(
             children: [
               _buildCategorySelector(),

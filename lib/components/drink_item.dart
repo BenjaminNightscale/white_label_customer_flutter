@@ -10,15 +10,21 @@ class DrinkItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    bool isOutOfStock = drink.quantity <= 0;
+
     return InkWell(
       onTap: () {
-        Provider.of<Cart>(context, listen: false).addItem(drink);
+        if (!isOutOfStock) {
+          Provider.of<Cart>(context, listen: false).addItem(drink);
+        }
       },
       child: Container(
         margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0.0),
         padding: const EdgeInsets.symmetric(vertical: 5.0, horizontal: 15.0),
         decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.background,
+          color: isOutOfStock
+              ? Theme.of(context).colorScheme.surface.withOpacity(0.5)
+              : Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(8.0),
         ),
         child: IntrinsicHeight(
@@ -33,16 +39,43 @@ class DrinkItem extends StatelessWidget {
                       style: Theme.of(context)
                           .textTheme
                           .displayMedium
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: isOutOfStock
+                                ? Colors.grey
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
                     Text(
                       drink.ingredients.join(' + '),
-                      style: Theme.of(context).textTheme.bodyMedium,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(
+                            color: isOutOfStock
+                                ? Colors.grey
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
                     Text(
                       '${drink.price.toStringAsFixed(2)} €',
-                      style: Theme.of(context).textTheme.displayMedium,
+                      style: Theme.of(context)
+                          .textTheme
+                          .displayMedium
+                          ?.copyWith(
+                            color: isOutOfStock
+                                ? Colors.grey
+                                : Theme.of(context).colorScheme.onSurface,
+                          ),
                     ),
+                    if (isOutOfStock)
+                      Text(
+                        'Out of Stock',
+                        style: TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -50,10 +83,14 @@ class DrinkItem extends StatelessWidget {
                 icon: Icon(
                   Icons.add_circle,
                   size: 25,
-                  color: Theme.of(context).colorScheme.primary,
+                  color: isOutOfStock
+                      ? Colors.grey
+                      : Theme.of(context).colorScheme.primary,
                 ),
                 onPressed: () {
-                  Provider.of<Cart>(context, listen: false).addItem(drink);
+                  if (!isOutOfStock) {
+                    Provider.of<Cart>(context, listen: false).addItem(drink);
+                  }
                 },
               ),
             ],

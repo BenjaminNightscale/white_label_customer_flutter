@@ -24,7 +24,7 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (context) =>  const OrderPage()),
             );
           },
-          child: const Text('Zur DetailsPage wechseln'),
+          child: const Text('Order here'),
         ),
       ),
     );

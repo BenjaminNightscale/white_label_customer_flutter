@@ -1,9 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:white_label_customer_flutter/services/database/drink.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Cart with ChangeNotifier {
   final List<Drink> _items = [];
-  double _tipPercentage = 15.0; // Default tip percentage
+  double _tipPercentage = 15.0;
 
   List<Drink> get items => _items;
   double get tipPercentage => _tipPercentage;
@@ -25,11 +26,13 @@ class Cart with ChangeNotifier {
     }
 
     existingItem.quantity++;
+    _reserveDrink(drink);
     notifyListeners();
   }
 
   void removeItem(Drink drink) {
     _items.removeWhere((item) => item.id == drink.id);
+    _releaseDrink(drink);
     notifyListeners();
   }
 
@@ -44,7 +47,7 @@ class Cart with ChangeNotifier {
 
   void setTipPercentage(double percentage) {
     if (_tipPercentage == percentage) {
-      _tipPercentage = 0.0; // Deselect if the same percentage is pressed again
+      _tipPercentage = 0.0;
     } else {
       _tipPercentage = percentage;
     }
@@ -52,13 +55,17 @@ class Cart with ChangeNotifier {
   }
 
   void clear() {
+    for (var drink in _items) {
+      _releaseDrink(drink);
+    }
     _items.clear();
-    _tipPercentage = 0.0; // Reset tip
+    _tipPercentage = 0.0;
     notifyListeners();
   }
 
   void increaseQuantity(Drink drink) {
     drink.quantity++;
+    _reserveDrink(drink);
     notifyListeners();
   }
 
@@ -68,12 +75,33 @@ class Cart with ChangeNotifier {
     } else {
       _items.remove(drink);
     }
+    _releaseDrink(drink);
     notifyListeners();
   }
 
   void setQuantityToZero(Drink drink) {
     drink.quantity = 0;
     _items.remove(drink);
+    _releaseDrink(drink);
+    notifyListeners();
+  }
+
+  void _reserveDrink(Drink drink) {
+    FirebaseFirestore.instance
+        .collection('drinks')
+        .doc(drink.id)
+        .update({'quantity': FieldValue.increment(-1)});
+  }
+
+  void _releaseDrink(Drink drink) {
+    FirebaseFirestore.instance
+        .collection('drinks')
+        .doc(drink.id)
+        .update({'quantity': FieldValue.increment(1)});
+  }
+
+  void finalizeOrder() {
+    _items.clear();
     notifyListeners();
   }
 }

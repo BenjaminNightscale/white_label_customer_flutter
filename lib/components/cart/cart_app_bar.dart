@@ -59,7 +59,7 @@ class CartAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ],
           ),
-          backgroundColor: Theme.of(context).colorScheme.background,
+          backgroundColor: Theme.of(context).colorScheme.surface,
         ),
         Container(
           height: 3.0,

@@ -10,7 +10,7 @@ class BottomCartPopup extends StatelessWidget {
     int totalItems = cart.items.fold(0, (sum, item) => sum + item.quantity);
 
     return Container(
-      color: Theme.of(context).colorScheme.background,
+      color: Theme.of(context).colorScheme.surface,
       padding: const EdgeInsets.only(left: 10.0, right: 10.0, top: 5.0, bottom: 40),
       child: Row(
         children: [
