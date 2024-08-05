@@ -1,29 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:provider/provider.dart';
+import 'package:white_label_customer_flutter/components/cart/cart.dart';
 import 'package:white_label_customer_flutter/components/cart/tip_section.dart';
 import 'package:white_label_customer_flutter/components/summary_area.dart';
 import 'package:white_label_customer_flutter/services/payment/payment_service.dart';
-import 'package:provider/provider.dart';
-import 'package:white_label_customer_flutter/components/cart/cart.dart';
 
-class CheckoutView extends StatelessWidget {
+class CheckoutView extends StatefulWidget {
+  @override
+  _CheckoutViewState createState() => _CheckoutViewState();
+}
+
+class _CheckoutViewState extends State<CheckoutView> {
   final PaymentService _paymentService = PaymentService();
+  String _paymentMethod = '';
 
   @override
   Widget build(BuildContext context) {
     final cart = Provider.of<Cart>(context);
 
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Checkout'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.all(16.0), // Padding around the main content
+              padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
                   ListView.builder(
-                    shrinkWrap: true, // Ensure it takes only as much space as needed
-                    physics: NeverScrollableScrollPhysics(), // Disable internal scrolling
+                    shrinkWrap: true,
+                    physics: NeverScrollableScrollPhysics(),
                     itemCount: cart.items.length,
                     itemBuilder: (context, index) {
                       final item = cart.items[index];
@@ -31,7 +44,6 @@ class CheckoutView extends StatelessWidget {
                         title: Text(item.name),
                         subtitle: Text('Quantity: ${item.quantity}'),
                         trailing: Text('€${item.price.toStringAsFixed(2)}'),
-                        textColor: Theme.of(context).colorScheme.onBackground,
                       );
                     },
                   ),
@@ -45,6 +57,34 @@ class CheckoutView extends StatelessWidget {
               child: SummaryArea(),
             ),
             Divider(color: Theme.of(context).colorScheme.outline),
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _paymentMethod = 'card';
+                      });
+                    },
+                    child: Text('Mit Karte bezahlen'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _paymentMethod = 'apple_pay';
+                      });
+                    },
+                    child: Text('Mit Apple Pay bezahlen'),
+                  ),
+                ],
+              ),
+            ),
+            ElevatedButton(
+              onPressed: _paymentMethod.isEmpty ? null : () => pay(context),
+              child: Text('Pay'),
+            ),
           ],
         ),
       ),
@@ -57,21 +97,35 @@ class CheckoutView extends StatelessWidget {
     const String currency = 'eur';
 
     try {
-      // Create Payment Intent on the backend
       final String clientSecret = await _paymentService.createPaymentIntent(
         amount,
         currency,
       );
 
-      // Display the Stripe Payment Sheet
-      await Stripe.instance.initPaymentSheet(
+      if (_paymentMethod == 'card') {
+        await Stripe.instance.initPaymentSheet(
           paymentSheetParameters: SetupPaymentSheetParameters(
-        paymentIntentClientSecret: clientSecret,
-        style: ThemeMode.system,
-        merchantDisplayName: 'Your Merchant Name',
-      ));
+            paymentIntentClientSecret: clientSecret,
+            style: ThemeMode.system,
+            merchantDisplayName: 'Your Merchant Name',
+          ),
+        );
 
-      await Stripe.instance.presentPaymentSheet();
+        await Stripe.instance.presentPaymentSheet();
+      } else if (_paymentMethod == 'apple_pay') {
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            style: ThemeMode.system,
+            merchantDisplayName: 'Your Merchant Name',
+            applePay: const PaymentSheetApplePay(
+              merchantCountryCode: 'DE', // Beispiel für Deutschland
+            ),
+          ),
+        );
+
+        await Stripe.instance.presentPaymentSheet();
+      }
 
       if (!context.mounted) return;
 
