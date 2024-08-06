@@ -65,19 +65,20 @@ class _CheckoutViewState extends State<CheckoutView> {
                   ElevatedButton(
                     onPressed: () {
                       setState(() {
-                        _paymentMethod = 'card';
-                      });
-                    },
-                    child: Text('Mit Karte bezahlen'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () {
-                      setState(() {
                         _paymentMethod = 'apple_pay';
                       });
                     },
                     child: Text('Mit Apple Pay bezahlen'),
                   ),
+                  ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _paymentMethod = 'google_pay';
+                      });
+                    },
+                    child: Text('Mit Google Pay bezahlen'),
+                  ),
+                  // Weitere Zahlungsmethoden könnten hier hinzugefügt werden
                 ],
               ),
             ),
@@ -93,7 +94,7 @@ class _CheckoutViewState extends State<CheckoutView> {
 
   Future<void> pay(BuildContext context) async {
     final cart = Provider.of<Cart>(context, listen: false);
-    final int amount = (cart.totalPrice * 100).toInt(); // Total amount in cents
+    final int amount = (cart.totalPrice * 100).toInt(); // Gesamtbetrag in Cent
     const String currency = 'eur';
 
     try {
@@ -102,36 +103,49 @@ class _CheckoutViewState extends State<CheckoutView> {
         currency,
       );
 
-      if (_paymentMethod == 'card') {
+      if (_paymentMethod == 'apple_pay') {
         await Stripe.instance.initPaymentSheet(
           paymentSheetParameters: SetupPaymentSheetParameters(
             paymentIntentClientSecret: clientSecret,
-            style: ThemeMode.system,
-            merchantDisplayName: 'Your Merchant Name',
-          ),
-        );
-
-        await Stripe.instance.presentPaymentSheet();
-      } else if (_paymentMethod == 'apple_pay') {
-        await Stripe.instance.initPaymentSheet(
-          paymentSheetParameters: SetupPaymentSheetParameters(
-            paymentIntentClientSecret: clientSecret,
-            style: ThemeMode.system,
             merchantDisplayName: 'Your Merchant Name',
             applePay: const PaymentSheetApplePay(
-              merchantCountryCode: 'DE', // Beispiel für Deutschland
+              merchantCountryCode: 'DE',
             ),
+            style: ThemeMode.system,
+            allowsDelayedPaymentMethods: false,
           ),
         );
 
         await Stripe.instance.presentPaymentSheet();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment completed!')),
+        );
+      } else if (_paymentMethod == 'google_pay') {
+        await Stripe.instance.initPaymentSheet(
+          paymentSheetParameters: SetupPaymentSheetParameters(
+            paymentIntentClientSecret: clientSecret,
+            merchantDisplayName: 'Your Merchant Name',
+            googlePay: const PaymentSheetGooglePay(
+              merchantCountryCode: 'AT',
+              testEnv:
+                  true, // Setzen Sie dies auf false, wenn Sie in Produktion sind
+            ),
+            style: ThemeMode.system,
+            allowsDelayedPaymentMethods: false,
+          ),
+        );
+
+        await Stripe.instance.presentPaymentSheet();
+
+        if (!context.mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Payment completed!')),
+        );
       }
-
-      if (!context.mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Payment completed!')),
-      );
     } catch (e) {
       if (e is StripeException) {
         print('Error from Stripe: ${e.error.localizedMessage}');

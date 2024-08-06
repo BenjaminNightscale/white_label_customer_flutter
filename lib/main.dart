@@ -15,6 +15,7 @@ void main() async {
       'pk_test_51P6zuhRqMnrUhHfkhrYOeFMcu9B62ylVKNwvmRFjXnF0za62HJMhlE0K04DZCOWAFBEA7orymPzLHFPfMCYVyExE00WEDimvo9';
 
   await Stripe.instance.applySettings();
+  Stripe.merchantIdentifier = 'merchant.com.nightscale';
 
   runApp(
     MultiProvider(
